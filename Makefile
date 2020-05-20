@@ -1,16 +1,19 @@
-DOCKER_USER:=pierres
-DOCKER_ORGANIZATION=archlinux
-DOCKER_IMAGE:=base
+DOCKER_USER:=sdrik
+DOCKER_ORGANIZATION=sdrik
+DOCKER_IMAGE:=archlinux32
 
 rootfs:
 	$(eval TMPDIR := $(shell mktemp -d))
 	cp /usr/share/devtools/pacman-extra.conf rootfs/etc/pacman.conf
+	sed -i 's/^Architecture *=.*/Architecture = i686/' rootfs/etc/pacman.conf
+	sed -i 's,\(/etc/pacman\.d/mirrorlist\),rootfs\1,' rootfs/etc/pacman.conf
 	cat pacman-conf.d-noextract.conf >> rootfs/etc/pacman.conf
 	env -i pacstrap -C rootfs/etc/pacman.conf -c -d -G -M $(TMPDIR) $(shell cat packages)
 	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(TMPDIR)/
+	sed -i 's,rootfs\(/etc/pacman\.d/mirrorlist\),\1,' $(TMPDIR)/etc/pacman.conf
 	arch-chroot $(TMPDIR) locale-gen
 	arch-chroot $(TMPDIR) pacman-key --init
-	arch-chroot $(TMPDIR) pacman-key --populate archlinux
+	arch-chroot $(TMPDIR) pacman-key --populate archlinux32
 	tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(TMPDIR) -c . -f archlinux.tar
 	rm -rf $(TMPDIR)
 
